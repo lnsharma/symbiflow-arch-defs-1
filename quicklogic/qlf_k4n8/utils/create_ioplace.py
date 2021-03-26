@@ -90,9 +90,7 @@ def main():
             if len(port_name_list) != len(pin_name):
                 print(
                     'CSV port name "{}" length does not match with mapped pin name "{}" length'
-                    .format(
-                        line['port_name'], line['mapped_pin']
-                    ),
+                    .format(line['port_name'], line['mapped_pin']),
                     file=sys.stderr
                 )
                 sys.exit(1)
@@ -101,12 +99,12 @@ def main():
                 if port_name_list[indx] in port_map:
                     curr_map = port_map[port_name_list[indx]]
                     if gpio_type is None or gpio_type is '':
-                        pad_map[pin_name[indx]]=(
+                        pad_map[pin_name[indx]] = (
                             int(curr_map.x), int(curr_map.y), int(curr_map.z)
                         )
                     else:
                         gpio_pin = pin_name[indx] + ":" + gpio_type
-                        pad_map[gpio_pin]=(
+                        pad_map[gpio_pin] = (
                             int(curr_map.x), int(curr_map.y), int(curr_map.z)
                         )
                 else:
@@ -136,11 +134,11 @@ def main():
             print(
                 'PCF constraint "{}" from line {} constraints pad {} which is not in available pad map:\n{}'
                 .format(
-                    pcf_constraint.line_str, pcf_constraint.line_num,
-                    pad_name, '\n'.join(sorted(pad_map.keys()))
+                    pcf_constraint.line_str, pcf_constraint.line_num, pad_name,
+                    '\n'.join(sorted(pad_map.keys()))
                 ),
                 file=sys.stderr
-           )
+            )
             sys.exit(1)
 
         # Get the top-level block instance, strip its index

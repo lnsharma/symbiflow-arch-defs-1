@@ -15,6 +15,7 @@ from collections import namedtuple
 
 import lxml.etree as ET
 
+
 # =============================================================================
 class PinMappingData(object):
     """
@@ -42,6 +43,7 @@ class PinMappingData(object):
         return "{Port_name: '%s' mapped_pin: '%s' x: '%s' y: '%s' z: '%s'}" % (self.port_name, \
              self.mapped_pin, self.x, self.y, self.z)
 
+
 """
 Device properties present in the pin-mapping xml
 
@@ -54,6 +56,7 @@ z       - Number of cells per row/col
 DeviceData = namedtuple("DeviceData", "name family width height z")
 
 # =============================================================================
+
 
 def parse_io(xml_io, port_map, orientation, width, height, z):
 
@@ -68,24 +71,24 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
         io_row = xml_io.get("y")
         if io_row is None:
             if orientation == "TOP":
-                io_row = str(int(height)-1)
+                io_row = str(int(height) - 1)
             elif orientation == "BOTTOM":
-                io_row="0"
+                io_row = "0"
     elif orientation in ("LEFT", "RIGHT"):
         io_col = xml_io.get("x")
         if io_col is None:
             if orientation == "LEFT":
-                io_col="0"
+                io_col = "0"
             elif orientation == "RIGHT":
-                io_col = str(int(width)-1)
+                io_col = str(int(width) - 1)
 
     for xml_cell in xml_io.findall("CELL"):
-        port_name=xml_cell.get("port_name")
-        mapped_name=xml_cell.get("mapped_name")
-        startx=xml_cell.get("startx")
-        starty=xml_cell.get("starty")
-        endx=xml_cell.get("endx")
-        endy=xml_cell.get("endy")
+        port_name = xml_cell.get("port_name")
+        mapped_name = xml_cell.get("mapped_name")
+        startx = xml_cell.get("startx")
+        starty = xml_cell.get("starty")
+        endx = xml_cell.get("endx")
+        endy = xml_cell.get("endy")
 
         # define properties for scalar pins
         scalar_mapped_pins = vec_to_scalar(mapped_name)
@@ -96,19 +99,7 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
             curr_endx = int(endx)
             y = io_row
             if curr_startx < curr_endx:
-                for x in range(curr_startx, curr_endx+1):
-                    for j in range(0,int(z)):
-                        pins[x, y, j] = PinMappingData(
-                            port_name=port_name,
-                            mapped_pin=scalar_mapped_pins[i],
-                            x=x,
-                            y=y,
-                            z=j
-                        )
-                        port_map[scalar_mapped_pins[i]]=pins[x, y, j]
-                        i += 1
-            else:
-                for x in range(curr_startx, curr_endx-1, -1):
+                for x in range(curr_startx, curr_endx + 1):
                     for j in range(0, int(z)):
                         pins[x, y, j] = PinMappingData(
                             port_name=port_name,
@@ -117,14 +108,26 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
                             y=y,
                             z=j
                         )
-                        port_map[scalar_mapped_pins[i]]=pins[x, y, j]
+                        port_map[scalar_mapped_pins[i]] = pins[x, y, j]
+                        i += 1
+            else:
+                for x in range(curr_startx, curr_endx - 1, -1):
+                    for j in range(0, int(z)):
+                        pins[x, y, j] = PinMappingData(
+                            port_name=port_name,
+                            mapped_pin=scalar_mapped_pins[i],
+                            x=x,
+                            y=y,
+                            z=j
+                        )
+                        port_map[scalar_mapped_pins[i]] = pins[x, y, j]
                         i += 1
         elif starty is not None and endy is not None:
             curr_starty = int(starty)
             curr_endy = int(endy)
             x = io_col
             if curr_starty < curr_endy:
-                for y in range(curr_starty, curr_endy+1):
+                for y in range(curr_starty, curr_endy + 1):
                     for j in range(0, int(z)):
                         pins[x, y, j] = PinMappingData(
                             port_name=port_name,
@@ -133,7 +136,7 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
                             y=y,
                             z=j
                         )
-                        port_map[scalar_mapped_pins[i]]=pins[x, y, j]
+                        port_map[scalar_mapped_pins[i]] = pins[x, y, j]
                         i += 1
             else:
                 for y in range(curr_starty, curr_endy - 1, -1):
@@ -145,12 +148,14 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
                             y=y,
                             z=j
                         )
-                        port_map[scalar_mapped_pins[i]]=pins[x, y, j]
+                        port_map[scalar_mapped_pins[i]] = pins[x, y, j]
                         i += 1
 
     return pins, port_map
 
+
 # =============================================================================
+
 
 def vec_to_scalar(port_name):
     scalar_ports = []
@@ -160,21 +165,19 @@ def vec_to_scalar(port_name):
         if open_brace == -1 or close_brace == -1:
             print(
                 'Invalid portname "{}" specified. Bus ports should contain [ ] to specify range'
-                .format(
-                    port_name
-                ),
+                .format(port_name),
                 file=sys.stderr
             )
             sys.exit(1)
         bus = port_name[open_brace + 1:close_brace]
         lsb = int(bus[:bus.find(':')])
-        msb = int(bus[bus.find(':')+1:])
+        msb = int(bus[bus.find(':') + 1:])
         if lsb > msb:
-            for i in range(msb, lsb+1):
+            for i in range(msb, lsb + 1):
                 currPortName = port_name[:open_brace] + '[' + str(i) + ']'
                 scalar_ports.append(currPortName)
         else:
-            for i in range(lsb, msb+1):
+            for i in range(lsb, msb + 1):
                 currPortName = port_name[:open_brace] + '[' + str(i) + ']'
                 scalar_ports.append(currPortName)
     else:
@@ -182,7 +185,9 @@ def vec_to_scalar(port_name):
 
     return scalar_ports
 
+
 # =============================================================================
+
 
 def parse_io_cells(xml_root):
     """
@@ -205,22 +210,30 @@ def parse_io_cells(xml_root):
 
     xml_top_io = xml_io.find("TOP_IO")
     if xml_top_io is not None:
-        currcells, port_map = parse_io(xml_top_io, port_map, "TOP", width, height, z)
+        currcells, port_map = parse_io(
+            xml_top_io, port_map, "TOP", width, height, z
+        )
         cells["TOP"] = currcells
 
     xml_bottom_io = xml_io.find("BOTTOM_IO")
     if xml_bottom_io is not None:
-        currcells, port_map = parse_io(xml_bottom_io, port_map, "BOTTOM", width, height, z)
+        currcells, port_map = parse_io(
+            xml_bottom_io, port_map, "BOTTOM", width, height, z
+        )
         cells["BOTTOM"] = currcells
 
     xml_left_io = xml_io.find("LEFT_IO")
     if xml_left_io is not None:
-        currcells, port_map = parse_io(xml_left_io, port_map, "LEFT", width, height, z)
+        currcells, port_map = parse_io(
+            xml_left_io, port_map, "LEFT", width, height, z
+        )
         cells["LEFT"] = currcells
 
     xml_right_io = xml_io.find("RIGHT_IO")
     if xml_right_io is not None:
-        currcells, port_map = parse_io(xml_right_io, port_map, "RIGHT", width, height, z)
+        currcells, port_map = parse_io(
+            xml_right_io, port_map, "RIGHT", width, height, z
+        )
         cells["RIGHT"] = currcells
 
     return cells, port_map
@@ -240,11 +253,15 @@ def read_pinmapfile_data(pinmapfile):
     xml_root = xml_tree.getroot()
 
     if xml_root.get("name") is None:
-        print("ERROR: No mandatory attribute 'name' specified in 'DEVICE' section")
+        print(
+            "ERROR: No mandatory attribute 'name' specified in 'DEVICE' section"
+        )
         sys.exit(1)
 
     if xml_root.get("family") is None:
-        print("ERROR: No mandatory attribute 'family' specified in 'DEVICE' section")
+        print(
+            "ERROR: No mandatory attribute 'family' specified in 'DEVICE' section"
+        )
         sys.exit(1)
 
     if xml_root.get("width") is None:
@@ -260,15 +277,17 @@ def read_pinmapfile_data(pinmapfile):
         sys.exit(1)
 
     if xml_root.get("z") is None:
-        print("ERROR: No mandatory attribute 'z' specified in 'DEVICE' section")
+        print(
+            "ERROR: No mandatory attribute 'z' specified in 'DEVICE' section"
+        )
         sys.exit(1)
 
     deviceData = DeviceData(
-        name = xml_root.get("name"),
-        family = xml_root.get("family"),
-        width = xml_root.get("width"),
-        height = xml_root.get("height"),
-        z = xml_root.get("z")
+        name=xml_root.get("name"),
+        family=xml_root.get("family"),
+        width=xml_root.get("width"),
+        height=xml_root.get("height"),
+        z=xml_root.get("z")
     )
 
     # Parse IO cells
@@ -278,6 +297,7 @@ def read_pinmapfile_data(pinmapfile):
 
 
 # =============================================================================
+
 
 def generate_pinmap_csv(pinmap_csv_file, deviceData, io_cells):
     with open(pinmap_csv_file, "w", newline='') as csvfile:
@@ -289,11 +309,12 @@ def generate_pinmap_csv(pinmap_csv_file, deviceData, io_cells):
         for orientation, pin_map in io_cells.items():
             for pin_loc, pin_obj in pin_map.items():
                 writer.writerow(
-                    {'orientation': orientation,
-                    'row': str(pin_obj.y),
-                    'col': str(pin_obj.x),
-                    'pin_num_in_cell': str(pin_obj.z),
-                    'port_name': pin_obj.mapped_pin,
+                    {
+                        'orientation': orientation,
+                        'row': str(pin_obj.y),
+                        'col': str(pin_obj.x),
+                        'pin_num_in_cell': str(pin_obj.z),
+                        'port_name': pin_obj.mapped_pin,
                     }
                 )
 
@@ -305,7 +326,8 @@ def main():
 
     # Parse arguments
     parser = argparse.ArgumentParser(
-        description='Processes interface mapping xml file and generates template csv file'
+        description=
+        'Processes interface mapping xml file and generates template csv file'
     )
 
     parser.add_argument(
