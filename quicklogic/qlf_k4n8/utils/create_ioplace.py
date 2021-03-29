@@ -51,7 +51,7 @@ def gen_io_def(args):
             for port, pin in zip(port_name_list, pin_name):
                 if port in port_map:
                     curr_map = port_map[port]
-                    if gpio_type is None or gpio_type is '':
+                    if gpio_type is None or gpio_type == '':
                         pad_map[pin] = (
                             int(curr_map.x), int(curr_map.y), int(curr_map.z)
                         )
