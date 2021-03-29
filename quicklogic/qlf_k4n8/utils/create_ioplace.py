@@ -121,7 +121,9 @@ def gen_io_def(args):
     if io_place.constraints:
         io_place.output_io_place(args.output)
 
+
 # =============================================================================
+
 
 def main():
     '''

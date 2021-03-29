@@ -27,6 +27,7 @@ class PinMappingData(object):
     y           - y coordinate corresponding to row number
     z           - z coordinate corresponding to pin index at current x,y location
     """
+
     def __init__(self, port_name, mapped_pin, x, y, z):
         self.port_name = port_name
         self.mapped_pin = mapped_pin
@@ -57,6 +58,7 @@ z       - Number of cells per row/col
 DeviceData = namedtuple("DeviceData", "name family width height z")
 
 # =============================================================================
+
 
 def parse_io(xml_io, port_map, orientation, width, height, z):
     '''
@@ -157,6 +159,7 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
 
 # =============================================================================
 
+
 def vec_to_scalar(port_name):
     '''
     Converts given bus port into its scalar ports
@@ -190,6 +193,7 @@ def vec_to_scalar(port_name):
 
 
 # =============================================================================
+
 
 def parse_io_cells(xml_root):
     """
@@ -242,6 +246,7 @@ def parse_io_cells(xml_root):
 
 
 # ============================================================================
+
 
 def read_pinmapfile_data(pinmapfile):
     """
