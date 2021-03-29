@@ -331,7 +331,8 @@ def main():
     '''
     # Parse arguments
     parser = argparse.ArgumentParser(
-        description='Processes interface mapping xml file and generates template csv file'
+        description=
+        'Processes interface mapping xml file and generates template csv file'
     )
 
     parser.add_argument(
