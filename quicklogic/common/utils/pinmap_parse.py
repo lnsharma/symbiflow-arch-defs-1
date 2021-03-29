@@ -3,7 +3,7 @@
 This script parses given interface pin-mapping xml file, stores the pin-mapping
 information w.r.t. its location in the device. It also generates a template
 csv file for the end-user of the eFPGA device. User can modify the template
-csv file and specify the user-defined pin names to the ports defined in the 
+csv file and specify the user-defined pin names to the ports defined in the
 template csv file.
 """
 
@@ -23,11 +23,10 @@ class PinMappingData(object):
 
     port_name   - IO port name
     mapped_pin  - User-defined pin name mapped to the given port_name
-    x           - x coordinate corresponding to column number 
+    x           - x coordinate corresponding to column number
     y           - y coordinate corresponding to row number
     z           - z coordinate corresponding to pin index at current x,y location
     """
-
     def __init__(self, port_name, mapped_pin, x, y, z):
         self.port_name = port_name
         self.mapped_pin = mapped_pin
@@ -36,12 +35,14 @@ class PinMappingData(object):
         self.z = z
 
     def __str__(self):
-        return "{Port_name: '%s' mapped_pin: '%s' x: '%s' y: '%s' z: '%s'}" % (self.port_name, \
-             self.mapped_pin, self.x, self.y, self.z)
+        return "{Port_name: '%s' mapped_pin: '%s' x: '%s' y: '%s' z: '%s'}" % (
+            self.port_name, self.mapped_pin, self.x, self.y, self.z
+        )
 
     def __repr__(self):
-        return "{Port_name: '%s' mapped_pin: '%s' x: '%s' y: '%s' z: '%s'}" % (self.port_name, \
-             self.mapped_pin, self.x, self.y, self.z)
+        return "{Port_name: '%s' mapped_pin: '%s' x: '%s' y: '%s' z: '%s'}" % (
+            self.port_name, self.mapped_pin, self.x, self.y, self.z
+        )
 
 
 """
@@ -57,16 +58,16 @@ DeviceData = namedtuple("DeviceData", "name family width height z")
 
 # =============================================================================
 
-
 def parse_io(xml_io, port_map, orientation, width, height, z):
-
+    '''
+    Parses IO section of xml file
+    '''
     assert xml_io is not None
 
     pins = {}
 
     io_row = ""
     io_col = ""
-    xml_row_cols = {}
     if orientation in ("TOP", "BOTTOM"):
         io_row = xml_io.get("y")
         if io_row is None:
@@ -156,8 +157,10 @@ def parse_io(xml_io, port_map, orientation, width, height, z):
 
 # =============================================================================
 
-
 def vec_to_scalar(port_name):
+    '''
+    Converts given bus port into its scalar ports
+    '''
     scalar_ports = []
     if port_name is not None and ':' in port_name:
         open_brace = port_name.find('[')
@@ -174,12 +177,12 @@ def vec_to_scalar(port_name):
         msb = int(bus[bus.find(':') + 1:])
         if lsb > msb:
             for i in range(msb, lsb + 1):
-                currPortName = port_name[:open_brace] + '[' + str(i) + ']'
-                scalar_ports.append(currPortName)
+                curr_port_name = port_name[:open_brace] + '[' + str(i) + ']'
+                scalar_ports.append(curr_port_name)
         else:
             for i in range(lsb, msb + 1):
-                currPortName = port_name[:open_brace] + '[' + str(i) + ']'
-                scalar_ports.append(currPortName)
+                curr_port_name = port_name[:open_brace] + '[' + str(i) + ']'
+                scalar_ports.append(curr_port_name)
     else:
         scalar_ports.append(port_name)
 
@@ -187,7 +190,6 @@ def vec_to_scalar(port_name):
 
 
 # =============================================================================
-
 
 def parse_io_cells(xml_root):
     """
@@ -200,7 +202,7 @@ def parse_io_cells(xml_root):
 
     width = xml_root.get("width"),
     height = xml_root.get("height"),
-    z = xml_root.get("z")
+    io_per_cell = xml_root.get("z")
 
     # Get the "IO" section
     xml_io = xml_root.find("IO")
@@ -211,28 +213,28 @@ def parse_io_cells(xml_root):
     xml_top_io = xml_io.find("TOP_IO")
     if xml_top_io is not None:
         currcells, port_map = parse_io(
-            xml_top_io, port_map, "TOP", width, height, z
+            xml_top_io, port_map, "TOP", width, height, io_per_cell
         )
         cells["TOP"] = currcells
 
     xml_bottom_io = xml_io.find("BOTTOM_IO")
     if xml_bottom_io is not None:
         currcells, port_map = parse_io(
-            xml_bottom_io, port_map, "BOTTOM", width, height, z
+            xml_bottom_io, port_map, "BOTTOM", width, height, io_per_cell
         )
         cells["BOTTOM"] = currcells
 
     xml_left_io = xml_io.find("LEFT_IO")
     if xml_left_io is not None:
         currcells, port_map = parse_io(
-            xml_left_io, port_map, "LEFT", width, height, z
+            xml_left_io, port_map, "LEFT", width, height, io_per_cell
         )
         cells["LEFT"] = currcells
 
     xml_right_io = xml_io.find("RIGHT_IO")
     if xml_right_io is not None:
         currcells, port_map = parse_io(
-            xml_right_io, port_map, "RIGHT", width, height, z
+            xml_right_io, port_map, "RIGHT", width, height, io_per_cell
         )
         cells["RIGHT"] = currcells
 
@@ -240,7 +242,6 @@ def parse_io_cells(xml_root):
 
 
 # ============================================================================
-
 
 def read_pinmapfile_data(pinmapfile):
     """
@@ -282,27 +283,24 @@ def read_pinmapfile_data(pinmapfile):
         )
         sys.exit(1)
 
-    deviceData = DeviceData(
-        name=xml_root.get("name"),
-        family=xml_root.get("family"),
-        width=xml_root.get("width"),
-        height=xml_root.get("height"),
-        z=xml_root.get("z")
-    )
-
     # Parse IO cells
     io_cells, port_map = parse_io_cells(xml_root)
 
-    return deviceData, io_cells, port_map
+    return io_cells, port_map
 
 
 # =============================================================================
 
 
-def generate_pinmap_csv(pinmap_csv_file, deviceData, io_cells):
+def generate_pinmap_csv(pinmap_csv_file, io_cells):
+    '''
+    Generates pinmap csv file
+    '''
     with open(pinmap_csv_file, "w", newline='') as csvfile:
-        fieldnames = ['orientation','row','col','pin_num_in_cell',\
-            'port_name','mapped_pin','GPIO_type']
+        fieldnames = [
+            'orientation', 'row', 'col', 'pin_num_in_cell', 'port_name',
+            'mapped_pin', 'GPIO_type'
+        ]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
 
         writer.writeheader()
@@ -323,7 +321,9 @@ def generate_pinmap_csv(pinmap_csv_file, deviceData, io_cells):
 
 
 def main():
-
+    '''
+    Processes interface mapping xml file and generates template csv file
+    '''
     # Parse arguments
     parser = argparse.ArgumentParser(
         description=
@@ -346,10 +346,10 @@ def main():
     args = parser.parse_args()
 
     # Load all the necessary data from the pinmapfile
-    deviceData, io_cells, port_map = read_pinmapfile_data(args.pinmapfile)
+    io_cells, port_map = read_pinmapfile_data(args.pinmapfile)
 
     # Generate the pinmap CSV
-    generate_pinmap_csv(args.csv_file, deviceData, io_cells)
+    generate_pinmap_csv(args.csv_file, io_cells)
 
 
 if __name__ == "__main__":
